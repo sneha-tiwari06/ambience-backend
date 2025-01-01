@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
 const bannerImageRoutes = require('./routes/bannerRoutes');
 const pointerRoutes = require('./routes/pointerRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -48,6 +51,96 @@ app.use('/api/careers', careerRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/gallery-image', galleryImageRoutes);
 app.use('/api/spotlights', spotlightRoutes);
+
+// ----query
+const formSchema = new mongoose.Schema({
+  car_name: String,
+  car_email: String,
+  car_mobile: String,
+  car_location: String,
+  car_role: String,
+  car_resume: String,
+});
+const FormData = mongoose.model('FormData', formSchema);
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Directory to store uploaded files
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + '-' + file.originalname); // Unique file name
+  },
+});
+
+const upload = multer({ storage });
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'devfreelance23m@gmail.com',
+    pass: 'qdmg mskl rupy eolm',
+  },
+});
+
+app.post('/api/submit', upload.single('car_resume'), async (req, res) => {
+  try {
+    console.log(req.file);
+
+    const { car_name, car_email, car_mobile, car_location, car_role } = req.body;
+    const filePath = req.file ? path.join('uploads', req.file.filename) : '';
+    const formData = new FormData({
+      car_name,
+      car_email,
+      car_mobile,
+      car_location,
+      car_role,
+      car_resume: filePath,
+    });
+
+    await formData.save();
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: car_email,
+      subject: `Application Received: ${car_name}`,
+      text: `Hello ${car_name},\n\nThank you for applying for the role: ${car_role}.\n\nDetails:\nName: ${car_name}\nEmail: ${car_email}\nMobile: ${car_mobile}\nLocation: ${car_location}\n\nBest regards,\nYour Company`,
+      attachments: req.file
+        ? [
+            {
+              filename: req.file.originalname,
+              path: path.resolve(req.file.path),
+            },
+          ]
+        : [],
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).send({ message: 'Form submitted successfully!' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: 'Something went wrong!' });
+  }
+});
+// Add this after your POST route
+app.get('/api/career-queries', async (req, res) => {
+  try {
+    const formDataList = await FormData.find(); // Fetch all form data from the database
+    res.status(200).json(formDataList); // Send the retrieved data as a JSON response
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: 'Something went wrong while fetching data!' });
+  }
+});
+app.get('/api/career-queries/count', async (req, res) => {
+  try {
+    const count = await FormData.countDocuments(); // Assuming you use FormData for storing career queries
+    res.json({ count }); // Send the count as a response
+  } catch (error) {
+    console.error('Error fetching count:', error);
+    res.status(500).send({ error: 'Something went wrong!' });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

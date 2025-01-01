@@ -22,19 +22,39 @@ const upload = multer({ storage });
 // Create a new award
 exports.createAward = async (req, res) => {
   const { altText} = req.body; // Get alt text and status from the body
-  const imageFile = req.file; // Get uploaded file
+  const imageFile = req.files?.image;  // Get uploaded file
+  const certificateImageFile = req.files?.certificateImage; // Get uploaded certificate image file
+  console.log('Uploaded  image:', imageFile); // Log the certificate image file
 
-  if (!imageFile) {
-    return res.status(400).json({ message: "Image is required" });
+  console.log('Uploaded certificate image:', certificateImageFile); // Log the certificate image file
+
+  if (!imageFile && !certificateImageFile) {
+    return res.status(400).json({ message: "At least one image is required" });
   }
 
   try {
+    // Check if the filenames exist in the arrays
+    if (imageFile && !imageFile[0]?.filename) {
+      return res.status(400).json({ message: "Image file not found" });
+    }
+
+    if (certificateImageFile && !certificateImageFile[0]?.filename) {
+      return res.status(400).json({ message: "Certificate image file not found" });
+    }
+
+    // Safely construct the file paths
+    const imagePath = imageFile ? path.join('uploads/awards', imageFile[0].filename) : undefined;
+    const certificateImagePath = certificateImageFile ? path.join('uploads/awards', certificateImageFile[0].filename) : undefined;
+
+    // Log the constructed paths for debugging
+    console.log("Image path:", imagePath);
+    console.log("Certificate image path:", certificateImagePath);
+    // Create the award data
     const awardData = {
-      image: path.join('uploads/awards', imageFile.filename), // Store the path to the uploaded file
+      image: imagePath,
+      certificateImage: certificateImagePath,
       altText,
-     
     };
-    
     const newAward = new Award(awardData);
     await newAward.save();
     res.status(201).json(newAward);
@@ -90,24 +110,40 @@ exports.updateAward = async (req, res) => {
 
   try {
     const award = await Award.findById(id);
-    if (!award) return res.status(404).json({ message: 'Award not found' });
-
-    // Handle image deletion if a new image is uploaded
-    if (req.file) {
-      const oldImagePath = path.resolve(process.cwd(), award.image);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
-      award.image = path.join('uploads/awards', req.file.filename);
+    if (!award) {
+      return res.status(404).json({ message: 'Award not found' });
     }
 
+    // Handle image deletion if a new image is uploaded
+    if (req.files?.image) {
+      const oldImagePath = path.resolve(process.cwd(), award.image);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath); // Delete the old image from the filesystem
+      }
+      award.image = path.join('uploads/awards', req.files.image[0].filename); // Update image path
+    }
+
+    // Handle certificate image deletion if a new certificate image is uploaded
+    if (req.files?.certificateImage) {
+      const oldCertificateImagePath = path.resolve(process.cwd(), award.certificateImage);
+      if (fs.existsSync(oldCertificateImagePath)) {
+        fs.unlinkSync(oldCertificateImagePath); // Delete the old certificate image
+      }
+      award.certificateImage = path.join('uploads/awards', req.files.certificateImage[0].filename); // Update certificate image path
+    }
+
+    // Update the award's altText (or any other data fields you may want to update)
     award.altText = altText;
-       const updatedAward = await award.save();
+
+    // Save the updated award
+    const updatedAward = await award.save();
     res.status(200).json(updatedAward);
   } catch (error) {
+    console.error("Error updating award:", error); // Log the full error for debugging
     res.status(500).json({ message: "Error updating award", error: error.message });
   }
 };
+
 exports.deleteAward = async (req, res) => {
   const { id } = req.params;
 
@@ -120,6 +156,10 @@ exports.deleteAward = async (req, res) => {
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }
+    const certificateImagePath = path.resolve(process.cwd(), award.certificateImage);
+    if (fs.existsSync(certificateImagePath)) {
+      fs.unlinkSync(certificateImagePath);
+    }
 
     await Award.deleteOne({ _id: id });
     res.status(204).send();
@@ -129,4 +169,7 @@ exports.deleteAward = async (req, res) => {
 };
 
 // Export the multer upload middleware
-exports.upload = upload.single('image');
+exports.upload = upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'certificateImage', maxCount: 1 },
+]);
