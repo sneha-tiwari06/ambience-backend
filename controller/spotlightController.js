@@ -5,15 +5,14 @@ const fs = require("fs");
 exports.createSpotlight = async (req, res) => {
     try {
         const { spotlightheading, spotlightcontent, spotlightPointer1, spotlightPointer2, spotlightPointer3 } = req.body;
-        const videoFile = req.file;
-console.log(req.file);
-console.log(req.body);
-        if (!videoFile) {
+        const imageFile = req.file;
+
+        if (!imageFile) {
             return res.status(400).json({ message: "No file uploaded." });
         }
-        const videoUrl = `/uploads/videos/${videoFile.filename}`;
+        const imageUrl = `uploads/images/${imageFile.filename}`;
         const newSpotlight = new Spotlight({
-            videoUrl,
+            imageUrl,
             spotlightheading,
             spotlightcontent,
             spotlightPointer1,
@@ -33,8 +32,8 @@ console.log(req.body);
 
 exports.getAllSpotlights = async (req, res) => {
     try {
-        const spotlightVideo = await Spotlight.find();
-        res.status(200).json(spotlightVideo);
+        const spotlights = await Spotlight.find();
+        res.status(200).json(spotlights);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server Error" });
@@ -43,11 +42,11 @@ exports.getAllSpotlights = async (req, res) => {
 
 exports.getSpotlightById = async (req, res) => {
     try {
-        const spotlightVideo = await Spotlight.findById(req.params.id);
-        if (!spotlightVideo) {
+        const spotlight = await Spotlight.findById(req.params.id);
+        if (!spotlight) {
             return res.status(404).json({ message: "Spotlight not found." });
         }
-        res.status(200).json(spotlightVideo);
+        res.status(200).json(spotlight);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error." });
@@ -57,36 +56,37 @@ exports.getSpotlightById = async (req, res) => {
 exports.updateSpotlight = async (req, res) => {
     try {
         const { spotlightheading, spotlightcontent, spotlightPointer1, spotlightPointer2, spotlightPointer3 } = req.body;
-        const spotlightVideo = await Spotlight.findById(req.params.id);
+        const spotlight = await Spotlight.findById(req.params.id);
 
-        if (!spotlightVideo) {
+        if (!spotlight) {
             return res.status(404).json({ message: "Spotlight not found." });
         }
 
         if (req.file) {
-            // Delete old video file if a new one is uploaded
-            const oldVideoPath = path.resolve(process.cwd(), 'uploads/videos', path.basename(spotlightVideo.videoUrl));
+            // Delete old image file if a new one is uploaded
+            const oldImagePath = path.resolve(process.cwd(), 'uploads/images', path.basename(spotlight.imageUrl));
             
-            if (fs.existsSync(oldVideoPath)) {
-                fs.unlinkSync(oldVideoPath);
-                console.log('Old video deleted from filesystem.');
+            if (fs.existsSync(oldImagePath)) {
+                fs.unlinkSync(oldImagePath);
+                console.log('Old image deleted from filesystem.');
             } else {
-                console.warn('Old video file not found at path:', oldVideoPath);
+                console.warn('Old image file not found at path:', oldImagePath);
             }
-            spotlightVideo.videoUrl = `/uploads/videos/${req.file.filename}`;
+            spotlight.imageUrl = `/uploads/images/${req.file.filename}`;
         }
 
-        spotlightVideo.spotlightheading = spotlightheading || spotlightVideo.spotlightheading;
-        spotlightVideo.spotlightcontent = spotlightcontent || spotlightVideo.spotlightcontent;
-        spotlightVideo.spotlightPointer1 = spotlightPointer1 || spotlightVideo.spotlightPointer1;
-        spotlightVideo.spotlightPointer2 = spotlightPointer2 || spotlightVideo.spotlightPointer2;
-        spotlightVideo.spotlightPointer3 = spotlightPointer3 || spotlightVideo.spotlightPointer3;
+        // Update text fields
+        spotlight.spotlightheading = spotlightheading || spotlight.spotlightheading;
+        spotlight.spotlightcontent = spotlightcontent || spotlight.spotlightcontent;
+        spotlight.spotlightPointer1 = spotlightPointer1 || spotlight.spotlightPointer1;
+        spotlight.spotlightPointer2 = spotlightPointer2 || spotlight.spotlightPointer2;
+        spotlight.spotlightPointer3 = spotlightPointer3 || spotlight.spotlightPointer3;
 
-        await spotlightVideo.save();
+        await spotlight.save();
 
         res.status(200).json({
             message: "Spotlight updated successfully.",
-            data: spotlightVideo,
+            data: spotlight,
         });
     } catch (error) {
         console.error(error);
@@ -96,19 +96,19 @@ exports.updateSpotlight = async (req, res) => {
 
 exports.deleteSpotlight = async (req, res) => {
     try {
-        const spotlightVideo = await Spotlight.findById(req.params.id);
+        const spotlight = await Spotlight.findById(req.params.id);
 
-        if (!spotlightVideo) {
+        if (!spotlight) {
             return res.status(404).json({ message: "Spotlight not found." });
         }
 
-        // Delete video file from filesystem
-        const videoPath = path.resolve(process.cwd(), 'uploads/videos', path.basename(spotlightVideo.videoUrl));
-        if (fs.existsSync(videoPath)) {
-            fs.unlinkSync(videoPath); 
-            console.log('Video deleted from filesystem.');
+        // Delete image file from filesystem
+        const imagePath = path.resolve(process.cwd(), 'uploads/images', path.basename(spotlight.imageUrl));
+        if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath); 
+            console.log('Image deleted from filesystem.');
         } else {
-            console.warn('Video file not found at path:', videoPath);
+            console.warn('Image file not found at path:', imagePath);
         }
 
         await Spotlight.deleteOne({ _id: req.params.id });

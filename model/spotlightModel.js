@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const SpotlightSchema = new mongoose.Schema({
-  videoUrl: {
+  imageUrl: {
     type: String,
     required: true,
   },

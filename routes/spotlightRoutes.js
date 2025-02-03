@@ -9,7 +9,7 @@ const router = express.Router();
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Make sure the 'uploads/videos' folder exists or create it if necessary
-    cb(null, path.join(__dirname, '../uploads/videos'));
+    cb(null, path.join(__dirname, '../uploads/images'));
   },
   filename: (req, file, cb) => {
     // Use current timestamp to avoid name conflicts for videos
@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Route to upload a video and create a new Spotlight
-router.post('/upload', upload.single('videoUpload'), spotlightController.createSpotlight);
+router.post('/upload', upload.single('imageUpload'), spotlightController.createSpotlight);
 
 // Route to get all Spotlights
 router.get('/', spotlightController.getAllSpotlights);
@@ -30,7 +30,7 @@ router.get('/', spotlightController.getAllSpotlights);
 router.get('/:id', spotlightController.getSpotlightById);
 
 // Route to update a Spotlight by ID (with optional video upload)
-router.put('/:id', upload.single('video'), spotlightController.updateSpotlight);
+router.put('/:id', upload.single('imageUpload'), spotlightController.updateSpotlight);
 
 // Route to delete a Spotlight by ID (removes associated video as well)
 router.delete('/:id', spotlightController.deleteSpotlight);

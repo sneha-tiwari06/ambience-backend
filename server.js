@@ -85,7 +85,7 @@ const transporter = nodemailer.createTransport({
 
 app.post('/api/submit', upload.single('car_resume'), async (req, res) => {
   try {
-    console.log(req.file);
+    // console.log(req.file);
 
     const { car_name, car_email, car_mobile, car_location, car_role } = req.body;
     const filePath = req.file ? path.join('uploads', req.file.filename) : '';
@@ -141,6 +141,64 @@ app.get('/api/career-queries/count', async (req, res) => {
     res.status(500).send({ error: 'Something went wrong!' });
   }
 });
+// ----Contact-us----
+const ContactSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  mobile: String,
+  message: String,
+});
+const ContactFormSchema = mongoose.model('ContactFormSchema', ContactSchema);
+
+app.post('/api/contact-us', async (req, res) => {
+  try {
+    console.log(req.file);
+
+    const { name, email, mobile, message} = req.body;
+    const ContactData = new ContactFormSchema({
+      name,
+      email,
+      mobile,
+      message,
+    });
+
+    await ContactData.save();
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: email,
+      subject: `Application Received: ${name}`,
+      text: `Hello ${name},\n\nThank you for applying for the role: ${mobile}.\n\nDetails:\nName: ${mobile}\nEmail: ${message}\nMobile: ${message}\nLocation: ${message}\n\nBest regards,\nYour Company`,
+     
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).send({ message: 'Contact US Form submitted successfully!' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: 'Something went wrong!' });
+  }
+});
+
+app.get('/api/contact-us', async (req, res) => {
+  try {
+    const contactDataList = await ContactFormSchema.find(); // Fetch all form data from the database
+    res.status(200).json(contactDataList); // Send the retrieved data as a JSON response
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: 'Something went wrong while fetching data!' });
+  }
+});
+app.get('/api/contact-us/count', async (req, res) => {
+  try {
+    const count = await ContactFormSchema.countDocuments(); 
+    res.json({ count });
+  } catch (error) {
+    console.error('Error fetching count:', error);
+    res.status(500).send({ error: 'Something went wrong!' });
+  }
+});
+// ----Contact-us----
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
