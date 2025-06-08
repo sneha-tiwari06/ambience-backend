@@ -12,7 +12,7 @@ if (!fs.existsSync(uploadPath)) {
 // Create a new gallery item
 exports.createGalleryItem = async (req, res) => {
   try {
-    const { projectName, location, metaTitle, metaKeywords, metaDescription  } = req.body;
+    const { projectName, location, metaTitle, metaKeywords, metaDescription, priority  } = req.body;
     const file = req.file;
 
     // console.log("File received:", file);
@@ -36,6 +36,7 @@ exports.createGalleryItem = async (req, res) => {
     const newItem = new Gallery({
       projectName,
       location,
+      priority,
       metaTitle,
       metaKeywords,
       metaDescription,
@@ -64,23 +65,53 @@ exports.getGalleryItems = async (req, res) => {
 exports.updateGalleryItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { projectName, location, metaTitle, metaKeywords, metaDescription  } = req.body;
+    const { projectName, location, metaTitle, metaKeywords, metaDescription, priority } = req.body;
+    const file = req.file;
 
-    const updatedItem = await Gallery.findByIdAndUpdate(
-      id,
-      { projectName, location, metaTitle, metaKeywords, metaDescription },
-      { new: true }
-    );
-
-    if (!updatedItem) {
+    // Find existing gallery item
+    const existingItem = await Gallery.findById(id);
+    if (!existingItem) {
       return res.status(404).json({ message: 'Gallery item not found' });
     }
 
+    // Prepare update data
+    const updateData = {
+      projectName,
+      location,
+      metaTitle,
+      metaKeywords,
+      metaDescription,
+      priority,
+    };
+
+    // If new image uploaded
+    if (file) {
+      const newImagePath = path.join(uploadPath, file.filename);
+      fs.renameSync(file.path, newImagePath); // Move uploaded file
+
+      const relativeImagePath = path.join('/uploads/gallery', file.filename);
+
+      // Delete old image file if exists
+      if (existingItem.image) {
+        const oldImagePath = path.join(__dirname, '..', existingItem.image);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+
+      updateData.image = relativeImagePath;
+    }
+
+    // Update in DB
+    const updatedItem = await Gallery.findByIdAndUpdate(id, updateData, { new: true });
+
     res.json({ message: 'Gallery item updated', data: updatedItem });
   } catch (error) {
+    console.error("Error updating gallery item:", error);
     res.status(500).json({ message: 'Error updating gallery item', error });
   }
 };
+
 // GET - Fetch a single gallery item by ID
 exports.getGalleryItemById = async (req, res) => {
   try {

@@ -7,6 +7,7 @@ const gallerySchema = new mongoose.Schema({
   metaKeywords: { type: String, required: true },
   metaDescription: { type: String, required: true },
    projectName: { type: String, required: true, trim: true, },
+   priority: { type: Number, required: true, trim: true, },
   location: {
     type: String,
     required: true,
