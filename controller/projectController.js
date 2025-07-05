@@ -162,10 +162,6 @@ exports.updateProject = async (req, res) => {
     res.status(500).json({ message: "Error updating project", error: err });
   }
 };
-
-
-
-
 exports.deleteProject = async (req, res) => {
   const { id } = req.params;
 

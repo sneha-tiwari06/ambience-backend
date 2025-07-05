@@ -8,6 +8,10 @@ const galleryImageSchema = new mongoose.Schema({
   originalImagePath: { type: String, required: true },
   thumbnailImagePath: { type: String, required: true },
   isThumbnail: { type: Boolean, default: false },
+  caption: { type: String, default: '' },
+  priority: {
+  type: Number,
+},
 }, { timestamps: true });
 
 const GalleryImage = mongoose.model('GalleryImage', galleryImageSchema);

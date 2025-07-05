@@ -6,6 +6,7 @@ const sharp = require("sharp");
 exports.addGalleryImage = async (req, res) => {
   const { projectId, altText, projectName } = req.body;
   const files = req.files;
+  const captions = req.body.captions; // Get captions array from request body
 
   if (!files || files.length === 0) {
     return res.status(400).json({ message: "Images are required" });
@@ -13,9 +14,16 @@ exports.addGalleryImage = async (req, res) => {
 
   try {
     const galleryImages = await Promise.all(
-      files.map(async (file) => {
-        const originalImagePath = path.join("uploads/gallery/galleryDetails/original", file.originalname);
-        const thumbnailImagePath = path.join("uploads/gallery/galleryDetails/thumb", file.originalname);
+      files.map(async (file, index) => {
+        const caption = captions && captions[index] ? captions[index] : '';
+        
+        // Generate unique filename to avoid conflicts
+        const timestamp = Date.now();
+        const fileExtension = path.extname(file.originalname);
+        const uniqueFilename = `${timestamp}-${index}-${Math.random().toString(36).substring(7)}${fileExtension}`;
+        
+        const originalImagePath = path.join("uploads/gallery/galleryDetails/original", uniqueFilename);
+        const thumbnailImagePath = path.join("uploads/gallery/galleryDetails/thumb", uniqueFilename);
 
         // Resize and save the thumbnail
         await sharp(file.path)
@@ -33,6 +41,7 @@ exports.addGalleryImage = async (req, res) => {
           projectId,
           altText,
           projectName,
+          caption, // Save individual caption for this image
           originalImagePath,
           thumbnailImagePath,
         });
@@ -63,14 +72,22 @@ exports.getGalleryImages = async (req, res) => {
 // Update a gallery image
 exports.updateGalleryImage = async (req, res) => {
   const { id } = req.params;
-  const { altText } = req.body;
-  const { projectName } = req.body;
+  const { altText, projectName, caption } = req.body;
+
+  console.log('Update request body:', req.body); // Debug log
+  console.log('Caption value:', caption); // Debug log
 
   try {
+    const updateData = {};
+    if (altText !== undefined) updateData.altText = altText;
+    if (projectName !== undefined) updateData.projectName = projectName;
+    if (caption !== undefined) updateData.caption = caption;
+
+    console.log('Update data:', updateData); // Debug log
+
     const updatedImage = await GalleryImage.findByIdAndUpdate(
       id,
-      { altText },
-      { projectName },
+      updateData,
       { new: true }
     );
 
@@ -78,8 +95,10 @@ exports.updateGalleryImage = async (req, res) => {
       return res.status(404).json({ message: "Gallery image not found" });
     }
 
+    console.log('Updated image:', updatedImage); // Debug log
     res.json(updatedImage);
   } catch (error) {
+    console.error('Error in updateGalleryImage:', error); // Debug log
     res.status(500).json({ message: "Error updating gallery image", error });
   }
 };
@@ -123,7 +142,30 @@ exports.deleteGalleryImage = async (req, res) => {
     res.status(500).json({ message: "Error deleting gallery image", error });
   }
 };
+// ...existing code...
 
+// Update image priority
+exports.updateGalleryImagePriority = async (req, res) => {
+  const { id } = req.params;
+  const { priority } = req.body;
+
+  try {
+    const updatedImage = await GalleryImage.findByIdAndUpdate(
+      id,
+      { priority },
+      { new: true }
+    );
+
+    if (!updatedImage) {
+      return res.status(404).json({ message: "Gallery image not found" });
+    }
+
+    res.json({ message: "Priority updated", image: updatedImage });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating priority", error });
+  }
+};
+// ...existing code...
 exports.toggleThumbnail = async (req, res) => {
   const { id } = req.params;
 

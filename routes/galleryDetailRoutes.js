@@ -7,6 +7,7 @@ const {
   updateGalleryImage,
   deleteGalleryImage,
   toggleThumbnail,
+  updateGalleryImagePriority,
 } = require("../controller/galleryDetailController");
 
 const router = express.Router();
@@ -23,7 +24,8 @@ router.put('/:id', updateGalleryImage);
 
 // Route for deleting a specific gallery image
 router.delete('/:id', deleteGalleryImage);
-router.put('/:id/toggle-thumbnail', toggleThumbnail);
+// router.put('/:id/toggle-thumbnail', toggleThumbnail);
+router.put("/:id/priority", updateGalleryImagePriority);
 
 
 
