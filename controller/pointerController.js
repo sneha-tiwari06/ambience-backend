@@ -3,13 +3,53 @@ const Pointers = require('../model/pointerModel');
 
 exports.createPointers = async (req, res) => {
   try {
-    const pointers = new Pointers(req.body);
+    const {
+      pointer1, pointer1Detail,
+      pointer2, pointer2Detail,
+      pointer3, pointer3Detail,
+      pointer4, pointer4Detail
+    } = req.body;
+
+
+    const pointers = new Pointers({
+      pointer1, pointer1Detail,
+      pointer2, pointer2Detail,
+      pointer3, pointer3Detail,
+      pointer4, pointer4Detail
+    });
     await pointers.save();
     res.status(201).json(pointers);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.updatePointers = async (req, res) => {
+  try {
+    const {
+      pointer1, pointer1Detail,
+      pointer2, pointer2Detail,
+      pointer3, pointer3Detail,
+      pointer4, pointer4Detail
+    } = req.body; 
+
+    const pointers = await Pointers.findByIdAndUpdate(
+      req.params.id,
+      {
+        pointer1, pointer1Detail,
+        pointer2, pointer2Detail,
+        pointer3, pointer3Detail,
+        pointer4, pointer4Detail
+      },
+      { new: true }
+    );
+    if (!pointers) return res.status(404).json({ error: 'Pointers not found' });
+    res.status(200).json(pointers);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+// ...existing code...
 exports.getAllPointers = async (req, res) => {
   try {
     const pointers = await Pointers.find();
@@ -31,7 +71,25 @@ exports.getPointersById = async (req, res) => {
 
 exports.updatePointers = async (req, res) => {
   try {
-    const pointers = await Pointers.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const {
+      pointer1, pointer1Detail,
+      pointer2, pointer2Detail,
+      pointer3, pointer3Detail,
+      pointer4, pointer4Detail
+    } = req.body;
+
+  
+
+    const pointers = await Pointers.findByIdAndUpdate(
+      req.params.id,
+      {
+        pointer1, pointer1Detail,
+        pointer2, pointer2Detail,
+        pointer3, pointer3Detail,
+        pointer4, pointer4Detail
+      },
+      { new: true }
+    );
     if (!pointers) return res.status(404).json({ error: 'Pointers not found' });
     res.status(200).json(pointers);
   } catch (error) {
