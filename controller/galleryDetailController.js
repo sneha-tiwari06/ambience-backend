@@ -4,7 +4,7 @@ const fs = require("fs").promises; // Use promise-based fs API
 const sharp = require("sharp");
 
 exports.addGalleryImage = async (req, res) => {
-  const { projectId, altText, projectName } = req.body;
+  const { projectId } = req.body;
   const files = req.files;
   const captions = req.body.captions; // Get captions array from request body
 
@@ -39,8 +39,8 @@ exports.addGalleryImage = async (req, res) => {
         // Save image details to the database
         const newGalleryImage = new GalleryImage({
           projectId,
-          altText,
-          projectName,
+          // altText,
+          // projectName,
           caption, // Save individual caption for this image
           originalImagePath,
           thumbnailImagePath,
@@ -72,18 +72,18 @@ exports.getGalleryImages = async (req, res) => {
 // Update a gallery image
 exports.updateGalleryImage = async (req, res) => {
   const { id } = req.params;
-  const { altText, projectName, caption } = req.body;
+  const {  caption } = req.body;
 
-  console.log('Update request body:', req.body); // Debug log
-  console.log('Caption value:', caption); // Debug log
+  // console.log('Update request body:', req.body); // Debug log
+  // console.log('Caption value:', caption); // Debug log
 
   try {
     const updateData = {};
-    if (altText !== undefined) updateData.altText = altText;
-    if (projectName !== undefined) updateData.projectName = projectName;
+    // if (altText !== undefined) updateData.altText = altText;
+    // if (projectName !== undefined) updateData.projectName = projectName;
     if (caption !== undefined) updateData.caption = caption;
 
-    console.log('Update data:', updateData); // Debug log
+    // console.log('Update data:', updateData); // Debug log
 
     const updatedImage = await GalleryImage.findByIdAndUpdate(
       id,

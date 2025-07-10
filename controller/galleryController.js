@@ -12,7 +12,7 @@ if (!fs.existsSync(uploadPath)) {
 // Create a new gallery item
 exports.createGalleryItem = async (req, res) => {
   try {
-    const { projectName, location, metaTitle, metaKeywords, metaDescription, priority  } = req.body;
+    const { projectName, location, metaTitle, metaKeywords, metaDescription, priority, galleryOverview  } = req.body;
     const file = req.file;
 
     // console.log("File received:", file);
@@ -40,6 +40,7 @@ exports.createGalleryItem = async (req, res) => {
       metaTitle,
       metaKeywords,
       metaDescription,
+      galleryOverview,
       image: relativeImagePath, // Store relative path only
     });
 
@@ -65,7 +66,7 @@ exports.getGalleryItems = async (req, res) => {
 exports.updateGalleryItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { projectName, location, metaTitle, metaKeywords, metaDescription, priority } = req.body;
+    const { projectName, location, metaTitle, metaKeywords, metaDescription, priority, galleryOverview } = req.body;
     const file = req.file;
 
     // Find existing gallery item
@@ -81,6 +82,7 @@ exports.updateGalleryItem = async (req, res) => {
       metaTitle,
       metaKeywords,
       metaDescription,
+      galleryOverview,
       priority,
     };
 

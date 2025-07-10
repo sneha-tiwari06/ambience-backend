@@ -6,8 +6,8 @@ exports.createTestimonial = async (req, res) => {
   try {
     const { logoAltText, imageAltText, content } = req.body;
 
-    if (!req.files.logo || !req.files.image) {
-      return res.status(400).json({ message: "Please upload both logo and image." });
+    if (!req.files.logo) {
+      return res.status(400).json({ message: "Please upload a logo." });
     }
 
     const logoPath = `/uploads/testimonials/${req.files.logo[0].filename}`;
